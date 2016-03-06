@@ -2,20 +2,22 @@
 <meta charset="utf-8">
 <style> /* set the CSS */
 
-body { font: 12px Arial;}
 
-path { 
-    stroke: steelblue;
-    stroke-width: 2;
-    fill: none;
+body {
+  font: 10px sans-serif;
 }
 
 .axis path,
 .axis line {
-    fill: none;
-    stroke: grey;
-    stroke-width: 1;
-    shape-rendering: crispEdges;
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
 }
 
 .overlay {
@@ -23,7 +25,7 @@ path {
   pointer-events: all;
 }
 
-.focus {
+.focus circle {
   fill: none;
   stroke: steelblue;
 }
@@ -63,10 +65,10 @@ var y = d3.scale.linear().range([height, 0]);
 
 // Define the axes
 var xAxis = d3.svg.axis().scale(x)
-    .orient("bottom").ticks(5);
+    .orient("bottom");
 
 var yAxis = d3.svg.axis().scale(y)
-    .orient("left").ticks(5);
+    .orient("left");
 
     
 // Adds the svg canvas
@@ -77,17 +79,6 @@ var svg = d3.select("body")
     .append("g")
         .attr("transform", 
               "translate(" + margin.left + "," + margin.top + ")");
-
-// Add the X Axis
-svg.append("g")
-    .attr("class", "x axis")
-    .attr("transform", "translate(0," + height + ")")
-    .call(xAxis);
-
-// Add the Y Axis
-svg.append("g")
-    .attr("class", "y axis")
-    .call(yAxis);
 
 
 // Define the line
@@ -119,8 +110,6 @@ function mouseMove() {
 
   var final_index = draw(x0/width);
 
-  console.log(dataset[final_index].close);
-
   focus.attr("transform", "translate(" + x0 + "," + y(dataset[final_index].close) + ")");
   focus.select("text").text(dataset[final_index].close);
 }
@@ -140,8 +129,20 @@ d3.tsv("test_data.tsv", function(error, data) {
   data = data.sort(sortByDateAscending);
 
   // Scale the range of the data
-  x.domain(d3.extent(data, function(d) { return d.date; }));
+  // x.domain(d3.extent(data, function(d) { return d.date; }));
+  x.domain([data[0].date, data[data.length - 1].date]);
   y.domain([0, d3.max(data, function(d) { return d.close; })]);
+
+  // Add the X Axis
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  // Add the Y Axis
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
 
   // Copy a local variable into a global variable
   dataset = data;
