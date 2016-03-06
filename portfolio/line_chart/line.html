@@ -33,57 +33,65 @@ var margin = {top: 20, right: 80, bottom: 30, left: 50},
     height = 350 - margin.top - margin.bottom;
 
 var parseDate = d3.time.format("%Y%m%d").parse;
-
-var x = d3.time.scale()
+var x = d3.scale.linear()
     .range([0, width]);
+
+// var x = d3.time.scale()
+//     .range([0, width]);
 
 var y = d3.scale.linear()
     .range([height, 0]);
 
 var color = d3.scale.category10();
-
+//x축 선언(설정) 
 var xAxis = d3.svg.axis()
     .scale(x)
     .orient("bottom");
-
+//y축 선언 (설정)
 var yAxis = d3.svg.axis()
     .scale(y)
     .orient("left");
 
+//line차트 설정, x축은 무엇으로 할거구 y축은 무엇으로 할거에요...
 var line = d3.svg.line()
     .interpolate("basis")
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y(d.temperature); });
+    .x(function(d) { console.log("wwwwww",d.date);return x(d.date); })
+    .y(function(d) { /*console.log("wwwwww",d.temperature);*/return y(d.temperature); });
+//asella.choi  변수 선언
+var year;
+var spring;
+var summer;
+var fall;
+var winter;
+//asella choi  변수 선언 끝 
 //svg 선언
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-//파일 불러오기 
-d3.tsv("data.tsv", function(error, data) {
-  if (error) throw error;
+///////////////////////
+d3.csv("weather.csv",function(data){
+  //console.log("weather_data",data[0].avg,data[0].spring);
+  color.domain(d3.keys(data[0]).filter(function(key) { console.log("key",key);return key !== "year"; }));
+  data.forEach(function(d){
+    
+    year = d.year;
 
-  color.domain(d3.keys(data[0]).filter(function(key) { console.log("key",key);return key !== "date"; }));
-
-  data.forEach(function(d) {
-    //console.log("test1",d);
-    d.date = parseDate(d.date);
-    var test_formatting = d3.time.format("%Y-%m-%d").parse;
-    console.log("teset2", test_formatting("2016-02-06"));
-    //console.log("test",d.date);
   });
-
+  console.log("year",year,typeof(year));
   var cities = color.domain().map(function(name) {
     return {
       name: name,
       values: data.map(function(d) {
-        return {date: d.date, temperature: +d[name]};
+        console.log("d.date__name",name,d[name]);
+        return {date: d.year, temperature: +d[name]};
       })
     };
   });
 
-  x.domain(d3.extent(data, function(d) { return d.date; }));
+//x 축과 y축의 범위를 지정 어디서부터 어디까지
+  x.domain(d3.extent(data, function(d) { return d.year; }));
 
   y.domain([
     d3.min(cities, function(c) { console.log("cities",cities);return d3.min(c.values, function(v) { return v.temperature; }); }),
@@ -91,10 +99,10 @@ d3.tsv("data.tsv", function(error, data) {
   ]);
 
   svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
-
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis);
+//Y축 
   svg.append("g")
       .attr("class", "y axis")
       .call(yAxis)
@@ -103,24 +111,110 @@ d3.tsv("data.tsv", function(error, data) {
       .attr("y", 6)
       .attr("dy", ".71em")
       .style("text-anchor", "end")
-      .text("Temperature (ºF)");
+      .text("Temperature (ºC)");
 
-  var city = svg.selectAll(".city")
+  var weather = svg.selectAll(".weather")
       .data(cities)
-    .enter().append("g")
-      .attr("class", "city");
+      .enter().append("g")
+      .attr("class", "weather");
+      // .on("mouseover", function() {
+      //       d3.select(this)
+      //         .transition()
+      //         .attr("x",320)
+      //         .ease("elastic");
+      //       console.log("test");
+      //    })
+      // .on("mouseout", function(d) {
+      //      d3.select(this)
+      //       .attr("fill", function(d) { return color(d.name); });
+      //    });
+      weather
+        .transition()
+        .attr("y",y)
+        .duration(1000000) // this is 1s
+        .delay(10000000);
 
-  city.append("path")
+  weather.append("path")
       .attr("class", "line")
-      .attr("d", function(d) { return line(d.values); })
+      .attr("d", function(d) {return line(d.values); })
       .style("stroke", function(d) { return color(d.name); });
 
-  city.append("text")
+  weather.append("text")
       .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
-      .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.temperature) + ")"; })
+      .attr("transform", function(d) { console.log("x"+d.value.date + "," + "y"+d.value.temperature);return "translate(" + x(d.value.date) + "," + y(d.value.temperature) + ")"; })
       .attr("x", 3)
       .attr("dy", ".35em")
       .text(function(d) { return d.name; });
+  
 });
+
+///////////////////////
+
+// //파일 불러오기 
+// d3.tsv("data.tsv", function(error, data) {
+//   if (error) throw error;
+
+//   color.domain(d3.keys(data[0]).filter(function(key) { console.log("key",key);return key !== "date"; }));
+
+//   data.forEach(function(d) {
+//     //console.log("test1",d);
+
+//     //형태를 바꾸어주는 것뿐 큰건 없음 
+//     d.date = parseDate(d.date);
+//     //var test_formatting = d3.time.format("%Y-%m-%d").parse;
+//     //console.log("teset2", test_formatting("2016-02-06"));
+    
+//   });
+//   //console.log("test",d.date,typeof(d.date));
+//   var cities = color.domain().map(function(name) {
+//     return {
+//       name: name,
+//       values: data.map(function(d) {
+//         //console.log("name",name);
+//         return {date: d.date, temperature: +d[name]};
+//       })
+//     };
+//   });
+
+// //x 축과 y축의 범위를 지정 어디서부터 어디까지
+//   x.domain(d3.extent(data, function(d) { return d.date; }));
+
+//   y.domain([
+//     d3.min(cities, function(c) { console.log("cities",cities);return d3.min(c.values, function(v) { return v.temperature; }); }),
+//     d3.max(cities, function(c) { console.log("cities",cities);return d3.max(c.values, function(v) { return v.temperature; }); })
+//   ]);
+
+//   svg.append("g")
+//       .attr("class", "x axis")
+//       .attr("transform", "translate(0," + height + ")")
+//       .call(xAxis);
+// //Y축 
+//   svg.append("g")
+//       .attr("class", "y axis")
+//       .call(yAxis)
+//     .append("text")
+//       .attr("transform", "rotate(-90)")
+//       .attr("y", 6)
+//       .attr("dy", ".71em")
+//       .style("text-anchor", "end")
+//       .text("Temperature (ºF)");
+
+//   var city = svg.selectAll(".city")
+//       .data(cities)
+//     .enter().append("g")
+//       .attr("class", "city");
+
+//   city.append("path")
+//       .attr("class", "line")
+//       .attr("d", function(d) { return line(d.values); })
+//       .style("stroke", function(d) { return color(d.name); });
+
+//   city.append("text")
+//       .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
+//       .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.temperature) + ")"; })
+//       .attr("x", 3)
+//       .attr("dy", ".35em")
+//       .text(function(d) { return d.name; });
+// });
 
 </script>
